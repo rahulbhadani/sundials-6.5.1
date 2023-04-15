@@ -1,0 +1,4 @@
+#pragma once
+
+#cmakedefine WITH_PYBIND
+#cmakedefine HAVE_GETOPT

@@ -1,0 +1,11 @@
+LICENSE
+NOTICE
+README.md
+setup.cfg
+setup.py
+python/src/sundials/__init__.py
+sundials.egg-info/PKG-INFO
+sundials.egg-info/SOURCES.txt
+sundials.egg-info/dependency_links.txt
+sundials.egg-info/not-zip-safe
+sundials.egg-info/top_level.txt
