@@ -23,7 +23,10 @@ cmake_minimum_required(VERSION 3.12)
 
 # Project SUNDIALS (initially only C supported)
 # sets PROJECT_SOURCE_DIR and PROJECT_BINARY_DIR variables.
-project(SUNDIALS C)
+project(SUNDIALS C CXX)
+
+add_compile_definitions(__HIP_PLATFORM_NVIDIA__)
+set(HIP_PATH "/opt/rocm/hip")
 
 # Specify the location of additional CMAKE modules
 set(CMAKE_MODULE_PATH
@@ -65,16 +68,18 @@ else()
   )
 endif()
 
+
+
 # Specify the VERSION and SOVERSION for shared libraries
 
-set(arkodelib_VERSION "5.5.1")
-set(arkodelib_SOVERSION "5")
+#set(arkodelib_VERSION "5.5.1")
+#set(arkodelib_SOVERSION "5")
 
-set(cvodelib_VERSION "6.5.1")
-set(cvodelib_SOVERSION "6")
+#set(cvodelib_VERSION "6.5.1")
+#set(cvodelib_SOVERSION "6")
 
-set(cvodeslib_VERSION "6.5.1")
-set(cvodeslib_SOVERSION "6")
+#set(cvodeslib_VERSION "6.5.1")
+#set(cvodeslib_SOVERSION "6")
 
 set(idalib_VERSION "6.5.1")
 set(idalib_SOVERSION "6")
@@ -280,6 +285,60 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/SUNDIALSConfig.cmake"
               "${CMAKE_CURRENT_BINARY_DIR}/SUNDIALSConfigVersion.cmake"
         DESTINATION "${SUNDIALS_INSTALL_CMAKEDIR}"
 )
+
+
+##################################################################
+
+set(SOURCE_DIR "${CMAKE_SOURCE_DIR}/src")
+set(HEADER_DIR "${CMAKE_SOURCE_DIR}/include")
+set(PYTHON_DIR "${CMAKE_SOURCE_DIR}/python")
+
+file(GLOB_RECURSE SOURCE_FILES 
+     "${SOURCE_DIR}/*.cpp" 
+     "${SOURCE_DIR}/*.c"
+     "${SOURCE_DIR}/*.h"
+     "${SOURCE_DIR}/*.hpp"
+)
+
+file(GLOB_RECURSE HEADER_FILES 
+     "${HEADER_DIR}/*.h"
+     "${HEADER_DIR}/*.hpp"
+)
+
+file (GLOB PYTHON_FILES "${PYTHON_DIR}/*.cpp" "${PYTHON_DIR}/*.hpp" "${PYTHON_DIR}/*.c" "${PYTHON_DIR}/*.h")
+
+
+# Include all subdirectories
+# add_subdirectory(${SOURCE_DIR})
+# add_subdirectory(${HEADER_DIR})
+# add_subdirectory(${PYTHON_DIR})
+
+
+include_directories("${CMAKE_SOURCE_DIR}/python")
+include_directories("${CMAKE_SOURCE_DIR}/include")
+include_directories("${CMAKE_SOURCE_DIR}/src")
+include_directories("${CMAKE_SOURCE_DIR}/src/sundials")
+include_directories("/opt/rocm/hip/include")
+include_directories("/usr/local/cuda/targets/x86_64-linux/include")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sundials/sundials_config.in ${CMAKE_CURRENT_BINARY_DIR}/include/sundials/sundials_config.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/sundials/sundials_config.in ${CMAKE_CURRENT_SOURCE_DIR}/include/sundials/sundials_config.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
+
+find_package(pybind11 REQUIRED)
+pybind11_add_module(sundialspy 
+	${SOURCE_FILES}
+	${HEADER_FILES}
+	${PYTHON_FILES}
+)
+
+target_link_libraries(sundialspy PUBLIC)
+
+install(TARGETS sundialspy
+  COMPONENT python
+  LIBRARY DESTINATION "${PYTHON_LIBRARY_DIR}"
+  )
 
 # Export targets so build directory can be used directly
 export(
